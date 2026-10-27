@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <rect width="1280" height="640" fill="#0b0f14"/>
+  <path d="M0 96H1280M0 192H1280M0 288H1280M0 384H1280M0 480H1280M0 576H1280M96 0V640M192 0V640M288 0V640M384 0V640M480 0V640M576 0V640M672 0V640M768 0V640M864 0V640M960 0V640M1056 0V640M1152 0V640" stroke="#18212b"/>
+  <rect x="64" y="60" width="1152" height="520" rx="28" fill="#101720" stroke="#293747" stroke-width="2"/>
+  <text x="112" y="132" fill="#f59e0b" font-family="ui-monospace, monospace" font-size="24" font-weight="700">0xreconlion / EXECUTION-FREE TRIAGE</text>
+  <text x="108" y="246" fill="#f7f8fa" font-family="Inter, Arial, sans-serif" font-size="86" font-weight="800">Repo First Look</text>
+  <text x="112" y="310" fill="#aebdca" font-family="Inter, Arial, sans-serif" font-size="31">See the review surface before target code gets a chance to run.</text>
+  <g transform="translate(112 366)" font-family="ui-monospace, monospace" font-size="19">
+    <rect width="205" height="112" rx="16" fill="#151f2a" stroke="#516477"/><text x="30" y="46" fill="#f59e0b">GIT INDEX</text><text x="30" y="80" fill="#f7f8fa">TRACKED ONLY</text>
+    <rect x="226" width="205" height="112" rx="16" fill="#151f2a" stroke="#516477"/><text x="256" y="46" fill="#f59e0b">OPAQUE</text><text x="256" y="80" fill="#f7f8fa">+ EXEC BITS</text>
+    <rect x="452" width="205" height="112" rx="16" fill="#151f2a" stroke="#516477"/><text x="482" y="46" fill="#f59e0b">HOOKS</text><text x="482" y="80" fill="#f7f8fa">+ SINKS</text>
+    <rect x="678" width="205" height="112" rx="16" fill="#151f2a" stroke="#516477"/><text x="708" y="46" fill="#f59e0b">UNICODE</text><text x="708" y="80" fill="#f7f8fa">HIDDEN ONLY</text>
+    <rect x="904" width="140" height="112" rx="16" fill="#f59e0b"/><text x="929" y="46" fill="#0b0f14" font-weight="700">0 RUNS</text><text x="929" y="80" fill="#0b0f14" font-weight="700">0 IMPORTS</text>
+  </g>
+  <text x="112" y="548" fill="#708396" font-family="ui-monospace, monospace" font-size="20">LINUX + MACOS · SYMLINKS NEVER FOLLOWED · GITLEAKS STATUS EXPLICIT</text>
+</svg>

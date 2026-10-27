@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repo-first-look"
+version = "0.1.0"
+description = "Static, execution-free first-pass inspection of Git repositories"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Zach Alkharusy"}]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: POSIX",
+]
+
+[project.scripts]
+repo-first-look = "repo_first_look.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

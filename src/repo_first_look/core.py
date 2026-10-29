@@ -46,21 +46,43 @@ def _run(args: list[str], cwd: Path, *, check: bool = True) -> subprocess.Comple
         raise ScanIncomplete(f"{args[0]} failed: {exc}") from exc
 
 
+def _trusted_root_alias(component: Path, info: os.stat_result) -> bool:
+    """Return whether a symlink is an OS-owned alias directly beneath `/`.
+
+    macOS exposes temporary directories through root-owned aliases such as
+    ``/var -> /private/var`` and ``/tmp -> /private/tmp``.  Those aliases are
+    outside an unprivileged caller's control, unlike a symlink introduced
+    inside a repository path.
+    """
+    return component.parent == Path(component.anchor) and getattr(info, "st_uid", None) == 0
+
+
 def _absolute_without_symlinked_ancestors(path: Path, *, allow_final_symlink: bool = False) -> Path:
     absolute = Path(os.path.abspath(os.fspath(path)))
-    components = list(reversed(absolute.parents))
-    if not allow_final_symlink:
-        components.append(absolute)
-    for component in components:
-        try:
-            info = component.lstat()
-        except FileNotFoundError:
-            if component == absolute:
-                raise
-            continue
-        if stat.S_ISLNK(info.st_mode):
-            raise ScanIncomplete(f"refusing symlinked path component: {component}")
-    return absolute
+    rewritten: set[Path] = set()
+    while True:
+        components = list(reversed(absolute.parents))
+        if not allow_final_symlink:
+            components.append(absolute)
+        for component in components:
+            try:
+                info = component.lstat()
+            except FileNotFoundError:
+                if component == absolute:
+                    raise
+                continue
+            if not stat.S_ISLNK(info.st_mode):
+                continue
+            if not _trusted_root_alias(component, info):
+                raise ScanIncomplete(f"refusing symlinked path component: {component}")
+            if component in rewritten:
+                raise ScanIncomplete(f"cyclic root path alias: {component}")
+            rewritten.add(component)
+            remainder = absolute.relative_to(component)
+            absolute = component.resolve(strict=True) / remainder
+            break
+        else:
+            return absolute
 
 
 def repository_root(path: Path) -> Path:

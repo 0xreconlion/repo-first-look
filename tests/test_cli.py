@@ -12,7 +12,12 @@ from unittest import mock
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from repo_first_look.cli import main
-from repo_first_look.core import inspect_file, inspect_tracked_file, scan_repository
+from repo_first_look.core import (
+    _absolute_without_symlinked_ancestors,
+    inspect_file,
+    inspect_tracked_file,
+    scan_repository,
+)
 
 
 class RepoFirstLookTests(unittest.TestCase):
@@ -62,6 +67,20 @@ class RepoFirstLookTests(unittest.TestCase):
         alias.symlink_to(root, target_is_directory=True)
         self.addCleanup(alias.unlink)
         self.assertEqual(main(["file", str(alias / "hook.sh")]), 2)
+        self.assertFalse(marker.exists())
+
+    def test_os_owned_root_alias_is_canonicalized_but_user_alias_is_not_trusted(self):
+        temp, root, marker = self.make_repo()
+        self.addCleanup(temp.cleanup)
+        alias = root.parent / f"{root.name}-system-alias"
+        alias.symlink_to(root, target_is_directory=True)
+        self.addCleanup(alias.unlink)
+        with mock.patch(
+            "repo_first_look.core._trusted_root_alias",
+            side_effect=lambda component, _info: component == alias,
+        ):
+            canonical = _absolute_without_symlinked_ancestors(alias / "hook.sh")
+        self.assertEqual(canonical, root / "hook.sh")
         self.assertFalse(marker.exists())
 
     def test_invalid_input_is_exit_two(self):

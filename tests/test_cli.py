@@ -12,7 +12,13 @@ from unittest import mock
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from repo_first_look.cli import main
-from repo_first_look.core import inspect_file, inspect_tracked_file, scan_repository
+from repo_first_look.core import (
+    _absolute_without_symlinked_ancestors,
+    _trusted_root_alias,
+    inspect_file,
+    inspect_tracked_file,
+    scan_repository,
+)
 
 
 class RepoFirstLookTests(unittest.TestCase):
@@ -62,6 +68,38 @@ class RepoFirstLookTests(unittest.TestCase):
         alias.symlink_to(root, target_is_directory=True)
         self.addCleanup(alias.unlink)
         self.assertEqual(main(["file", str(alias / "hook.sh")]), 2)
+        self.assertFalse(marker.exists())
+
+    def test_os_owned_root_alias_is_canonicalized_but_user_alias_is_not_trusted(self):
+        temp, root, marker = self.make_repo()
+        self.addCleanup(temp.cleanup)
+        alias = root.parent / f"{root.name}-system-alias"
+        alias.symlink_to(root, target_is_directory=True)
+        self.addCleanup(alias.unlink)
+        # Trust this alias *in addition to* whatever the real rule already
+        # trusts, rather than instead of it. The temporary directory itself can
+        # sit under a genuine OS root alias — macOS hands out `/var/folders/...`
+        # and `/var` is a root-owned symlink — so replacing the rule outright
+        # makes the walk refuse the fixture's own parent before it ever reaches
+        # the component under test.
+        #
+        # Compare resolved targets, not path objects. Once an ancestor alias has
+        # been rewritten the walk spells this component `/private/var/...` while
+        # the fixture built it as `/var/...`; those are the same alias and an
+        # identity comparison still misses it.
+        resolved_alias = alias.resolve()
+        with mock.patch(
+            "repo_first_look.core._trusted_root_alias",
+            side_effect=lambda component, info: component.resolve() == resolved_alias
+            or _trusted_root_alias(component, info),
+        ):
+            canonical = _absolute_without_symlinked_ancestors(alias / "hook.sh")
+        # The expected value has to be canonical too. Returning a path free of
+        # symlinked ancestors is the whole contract, so where the temporary
+        # directory itself sits under an OS alias the result is spelled
+        # `/private/var/...` and comparing against the fixture's own `/var/...`
+        # spelling fails on a correct result.
+        self.assertEqual(canonical, root.resolve() / "hook.sh")
         self.assertFalse(marker.exists())
 
     def test_invalid_input_is_exit_two(self):

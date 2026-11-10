@@ -82,9 +82,15 @@ class RepoFirstLookTests(unittest.TestCase):
         # and `/var` is a root-owned symlink — so replacing the rule outright
         # makes the walk refuse the fixture's own parent before it ever reaches
         # the component under test.
+        #
+        # Compare resolved targets, not path objects. Once an ancestor alias has
+        # been rewritten the walk spells this component `/private/var/...` while
+        # the fixture built it as `/var/...`; those are the same alias and an
+        # identity comparison still misses it.
+        resolved_alias = alias.resolve()
         with mock.patch(
             "repo_first_look.core._trusted_root_alias",
-            side_effect=lambda component, info: component == alias
+            side_effect=lambda component, info: component.resolve() == resolved_alias
             or _trusted_root_alias(component, info),
         ):
             canonical = _absolute_without_symlinked_ancestors(alias / "hook.sh")

@@ -8,6 +8,9 @@ permissions:
 jobs:
   test:
     strategy:
+      # Report every leg. A cancelled sibling reads as a failure in summary
+      # views, which makes a single real break hard to locate.
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
         python: ['3.11', '3.13']

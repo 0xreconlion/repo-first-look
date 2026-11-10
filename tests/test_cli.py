@@ -94,7 +94,12 @@ class RepoFirstLookTests(unittest.TestCase):
             or _trusted_root_alias(component, info),
         ):
             canonical = _absolute_without_symlinked_ancestors(alias / "hook.sh")
-        self.assertEqual(canonical, root / "hook.sh")
+        # The expected value has to be canonical too. Returning a path free of
+        # symlinked ancestors is the whole contract, so where the temporary
+        # directory itself sits under an OS alias the result is spelled
+        # `/private/var/...` and comparing against the fixture's own `/var/...`
+        # spelling fails on a correct result.
+        self.assertEqual(canonical, root.resolve() / "hook.sh")
         self.assertFalse(marker.exists())
 
     def test_invalid_input_is_exit_two(self):

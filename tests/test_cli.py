@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from repo_first_look.cli import main
 from repo_first_look.core import (
     _absolute_without_symlinked_ancestors,
+    _trusted_root_alias,
     inspect_file,
     inspect_tracked_file,
     scan_repository,
@@ -75,9 +76,16 @@ class RepoFirstLookTests(unittest.TestCase):
         alias = root.parent / f"{root.name}-system-alias"
         alias.symlink_to(root, target_is_directory=True)
         self.addCleanup(alias.unlink)
+        # Trust this alias *in addition to* whatever the real rule already
+        # trusts, rather than instead of it. The temporary directory itself can
+        # sit under a genuine OS root alias — macOS hands out `/var/folders/...`
+        # and `/var` is a root-owned symlink — so replacing the rule outright
+        # makes the walk refuse the fixture's own parent before it ever reaches
+        # the component under test.
         with mock.patch(
             "repo_first_look.core._trusted_root_alias",
-            side_effect=lambda component, _info: component == alias,
+            side_effect=lambda component, info: component == alias
+            or _trusted_root_alias(component, info),
         ):
             canonical = _absolute_without_symlinked_ancestors(alias / "hook.sh")
         self.assertEqual(canonical, root / "hook.sh")
